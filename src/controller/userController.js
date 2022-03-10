@@ -1,85 +1,104 @@
-import users from "./../model/userModel.js";
-import crypto from "crypto";
+import UserModel from "./../model/userModel.js";
 
-const Controller = {
-    index(request, response) {
+class UserController {
+    async index(request, response) {
+        const users = await UserModel.find();
         response.send({ data: users });
-    },
+    }
 
-    getOne(request, response) {
+    async getOne(request, response) {
         const { id } = request.params;
-        const userIndex = users.findIndex((user) => user.id === id);
 
-        if (userIndex === -1) {
-            return response.status(404).send({
+        try {
+            const user = await UserModel.findById(id);
+
+            if (user) {
+                return response.send({
+                    data: user
+                });
+            }
+            response.status(404).send({
                 message: 'Usuario não Encontrado'
+            });
+        } catch (error) {
+            response.status(400).send({
+                message: 'Aconteceu um erro inesperado'
             });
         }
 
-        return response.send({
-            data: users[userIndex]
-        });
-    },
+    }
 
-    remove(request, response) {
+    async remove(request, response) {
         const { id } = request.params;
-        const userIndex = users.findIndex((user) => user.id === id);
-        if (userIndex === -1) {
-            return response.status(404).send({
+
+        try {
+            const user = await UserModel.findById(id);
+            if (user) {
+                await user.remove()
+                return response.status(200).send({
+                    message: 'Usuario Deletado'
+                })
+            }
+
+
+            response.status(404).send({
                 message: 'Usuario não Encontrado'
             });
+        } catch (error) {
+            response.status(400).send({
+                message: 'Aconteceu um erro inesperado'
+            });
         }
-        users.splice(userIndex, 1);
-        return response.status(200).send({
-            message: 'Usuario Deletado'
-        })
-    },
 
-    store(request, response) {
-        const { name, city } = request.body;
+    }
 
-        if (typeof name !== 'string' || typeof city !== 'string') {
+    async store(request, response) {
+        const { name, email, phones, password, birthDate, state } = request.body;
+
+        if (typeof name !== 'string') {
             return response.status(400).send({
                 message: 'Dados Invalidos'
             });
         }
 
-        const user = {
-            id: crypto.randomUUID(),
-            name,
-            city,
-        };
-        users.push(user);
-        return response.send({
-            message: "Usuário criado!",
-            data: user
-        });
-    },
+        try {
+            const user = await UserModel.create({
+                name, email, phones, password, birthDate, state
+            })
 
-    update(request, response) {
+            response.send({
+                message: "Usuário criado!",
+                data: user
+            });
+        } catch (error) {
+            response.status(400).send({
+                message: 'Aconteceu um erro inesperado'
+            });
+        }
+    }
+
+    async update(request, response) {
         const id = request.params.id;
-        let { name, city } = request.body;
+        const { name, email, phones, password, birthDate, state } = request.body;
+        try {
+            const user = await UserModel.findByIdAndUpdate(id, {
+                name, email, phones, password, birthDate, state
+            }, {
+                new: true
+            })
 
-        const userIndex = users.findIndex((user) => user.id === id);
-        if (userIndex === -1) {
-            return response.status(404).send({
-                message: 'Usuario não Encontrado'
+            response.status(200).send({
+                message: 'Dados Atualizados',
+                data: user
+            });
+
+        } catch (error) {
+            response.status(400).send({
+                message: 'Aconteceu um erro inesperado'
             });
         }
 
-        if (typeof name === 'string' && typeof city === 'string') {
-            users[userIndex] = {
-                id,
-                name,
-                city
-            }
-        }
-
-        return response.status(200).send({
-            message: 'Dados Atualizados',
-            data: users[userIndex]
-        });
-    },
+    }
 }
 
-export default Controller;
+export default UserController;

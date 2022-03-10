@@ -1,8 +1,11 @@
-import userController from "./../controller/userController.js";
+import UserController from "./../controller/userController.js";
+
+
 import express from "express";
 
 const router = express.Router();
 
+const userController = new UserController();
 
 router.get("/api/user", userController.index);
 
