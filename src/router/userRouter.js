@@ -7,15 +7,17 @@ const router = express.Router();
 
 const userController = new UserController();
 
-router.get("/api/user", userController.index);
+router.post("/api/login", userController.login);
 
-router.get("/api/user/:id", userController.getOne);
+router.get("/api/users", userController.index);
 
-router.post("/api/user", userController.store);
+router.get("/api/users/:id", userController.getOne);
 
-router.put('/api/user/:id', userController.update);
+router.post("/api/users", userController.store);
 
-router.delete('/api/user/:id', userController.remove);
+router.put('/api/users/:id', userController.update);
+
+router.delete('/api/users/:id', userController.remove);
 
 
 export default router;

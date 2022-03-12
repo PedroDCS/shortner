@@ -1,9 +1,17 @@
 import express from "express";
 import morgan from "morgan";
 import mongoose from "mongoose";
-import userRouter from "./router/userRouter.js";
+import dotenv from "dotenv";
 
-mongoose.connect("mongodb://localhost:27017/pitang-trainee-backend1")
+import userRouter from "./router/userRouter.js";
+import { AuthMiddleware } from "./middleware/auth.middleware.js";
+
+dotenv.config();
+
+const DATABASE_URL = process.env.DATABASE_URL;
+const PORT = process.env.PORT;
+
+mongoose.connect(DATABASE_URL)
     .then(() => {
         console.log("Database Connected...");
     }).catch((error) => {
@@ -11,11 +19,12 @@ mongoose.connect("mongodb://localhost:27017/pitang-trainee-backend1")
     })
 
 const app = express();
-const PORT = 3000;
 
 app.use(express.json());
 
 app.use(morgan("dev"))
+
+app.use(AuthMiddleware);
 
 app.use(userRouter);
 

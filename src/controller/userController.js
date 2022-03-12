@@ -1,5 +1,18 @@
-import UserModel from "./../model/userModel.js";
+import bcryptjs from "bcryptjs";
+import jsonwebtoken from "jsonwebtoken";
 
+import UserModel from "./../model/userModel.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+const JWT_SECRET = process.env.JWT_SECRET
+
+const hashPassword = (password) => {
+    const salt = bcryptjs.genSaltSync(10);
+    const hash = bcryptjs.hashSync(password, salt);
+
+    return hash
+}
 class UserController {
     async index(request, response) {
         const users = await UserModel.find();
@@ -63,7 +76,7 @@ class UserController {
 
         try {
             const user = await UserModel.create({
-                name, email, phones, password, birthDate, state
+                name, email, phones, password: hashPassword(password), birthDate, state
             })
 
             response.send({
@@ -97,6 +110,32 @@ class UserController {
                 message: 'Aconteceu um erro inesperado'
             });
         }
+
+    }
+
+    async login(request, response) {
+        const { email, password, } = request.body;
+        const user = await UserModel.findOne({ email }).lean();
+
+        if (!user) {
+            return response.status(404).json({ message: "User Not Found" })
+        }
+
+        if (!bcryptjs.compareSync(password, user.password)) {
+            return response.status(404).json({ message: "PassWord Invalid" })
+        }
+
+        delete user.password;
+
+        const token = jsonwebtoken.sign({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+        }, JWT_SECRET,{
+            //expiresIn: 120
+        });
+
+        return response.json({ token })
 
     }
 }
